@@ -1,0 +1,21 @@
+---
+import { getLatestDigest } from '../lib/digests';
+import { SITE } from '../lib/site';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const latest = await getLatestDigest();
+const isLatest = path === '/' || (latest !== undefined && path === `/${latest.id}`);
+---
+
+<header class="site-header">
+  <div class="wrap masthead">
+    <a class="brand" href="/">
+      <span class="brand-name">{SITE.name}</span>
+      <span class="brand-tag">{SITE.categories.join(' / ')}</span>
+    </a>
+    <nav class="nav" aria-label="主导航">
+      <a href="/" aria-current={isLatest ? 'page' : undefined}>最新</a>
+      <a href="/archive" aria-current={path === '/archive' ? 'page' : undefined}>归档</a>
+    </nav>
+  </div>
+</header>

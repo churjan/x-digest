@@ -1,0 +1,34 @@
+---
+import { render } from 'astro:content';
+import { formatDateId } from '../lib/dates';
+import type { Digest } from '../lib/digests';
+
+interface Props {
+  digest: Digest;
+  latest?: boolean;
+}
+
+const { digest, latest = false } = Astro.props;
+const { Content, headings } = await render(digest);
+const toc = headings.filter((heading) => heading.depth === 2);
+---
+
+<article class="digest">
+  <header class="digest-head page-head">
+    {latest && <p class="kicker">最新一期</p>}
+    <h1>{formatDateId(digest.id)}</h1>
+    {digest.data.lead && <p class="lead">{digest.data.lead}</p>}
+    {
+      toc.length > 0 && (
+        <nav class="toc" aria-label="栏目">
+          {toc.map((heading) => (
+            <a href={`#${heading.slug}`}>{heading.text}</a>
+          ))}
+        </nav>
+      )
+    }
+  </header>
+  <div class="digest-body">
+    <Content />
+  </div>
+</article>

@@ -1,0 +1,21 @@
+{
+  "name": "x-digest",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "X早报：每日精选 X 上的 AI / 产品 / 增长 / UI / 前端 / 后端热帖。",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "new": "node scripts/new-digest.mjs",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^7.3.2"
+  }
+}

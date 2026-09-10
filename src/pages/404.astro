@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="未找到" description="没有这一页。">
+  <Header />
+  <main id="content" class="wrap">
+    <header class="page-head">
+      <p class="kicker">404</p>
+      <h1>没有这一页</h1>
+      <p class="lead">回<a href="/">最新一期</a>，或去<a href="/archive">归档</a>找日期。</p>
+    </header>
+  </main>
+  <Footer />
+</BaseLayout>

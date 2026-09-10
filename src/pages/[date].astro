@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import DigestArticle from '../components/DigestArticle.astro';
+import Pager from '../components/Pager.astro';
+import { getDigests, neighbors, type Digest } from '../lib/digests';
+import { formatDateId } from '../lib/dates';
+import { DATE_ID } from '../lib/site';
+
+export async function getStaticPaths() {
+  const digests = await getDigests();
+  return digests
+    .filter((digest) => DATE_ID.test(digest.id))
+    .map((digest) => ({
+      params: { date: digest.id },
+      props: { digest },
+    }));
+}
+
+interface Props {
+  digest: Digest;
+}
+
+const { digest } = Astro.props;
+const { newer, older } = neighbors(await getDigests(), digest.id);
+---
+
+<BaseLayout title={formatDateId(digest.id)} description={digest.data.lead}>
+  <Header />
+  <main id="content" class="wrap">
+    <DigestArticle digest={digest} />
+    <Pager newer={newer} older={older} />
+  </main>
+  <Footer />
+</BaseLayout>
