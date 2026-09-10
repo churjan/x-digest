@@ -320,26 +320,6 @@ img {
   font-size: 1.02rem;
 }
 
-.toc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 0.85rem;
-  margin: 1.3rem 0 0;
-  padding: 0.85rem 0 0;
-  border-top: 1px solid var(--rule);
-  font-size: 0.82rem;
-  letter-spacing: 0.06em;
-}
-
-.toc a {
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.toc a:hover {
-  color: var(--accent);
-}
-
 .digest-body {
   margin-top: 0.4rem;
 }
@@ -351,6 +331,10 @@ img {
   font-family: var(--serif);
   font-size: 1.15rem;
   letter-spacing: 0.28em;
+}
+
+.digest-body h2.latin {
+  letter-spacing: 0.04em;
 }
 
 .digest-body ol {
