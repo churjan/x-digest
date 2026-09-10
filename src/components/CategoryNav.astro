@@ -1,0 +1,36 @@
+---
+import { browseHref } from '../lib/browse';
+import { CATEGORIES, type CategorySlug } from '../lib/site';
+
+interface Props {
+  currentDate?: string;
+  category?: CategorySlug;
+  latestId?: string;
+}
+
+const { currentDate, category, latestId } = Astro.props;
+const dateId = currentDate ?? latestId;
+---
+
+<nav class="cat-bar" aria-label="分类">
+  <div class="wrap-wide cat-bar-inner">
+    <a
+      class:list={['cat-tab', { active: !category }]}
+      href={browseHref(dateId, undefined, latestId)}
+      aria-current={!category ? 'page' : undefined}
+    >
+      全部
+    </a>
+    {
+      CATEGORIES.map((item) => (
+        <a
+          class:list={['cat-tab', { active: category === item.slug }]}
+          href={browseHref(dateId, item.slug, latestId)}
+          aria-current={category === item.slug ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </div>
+</nav>

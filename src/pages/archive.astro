@@ -1,37 +1,38 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import BrowseShell from '../components/BrowseShell.astro';
 import { getDigests } from '../lib/digests';
 import { formatDateId } from '../lib/dates';
+import { browseHref } from '../lib/browse';
 
 const digests = await getDigests();
+const latestId = digests[0]?.id;
 ---
 
 <BaseLayout title="归档" description="X早报全部期次，按日期从新到旧排列。">
-  <Header />
-  <main id="content" class="wrap">
-    <header class="page-head">
-      <p class="kicker">全部期次</p>
-      <h1>归档</h1>
-      <p class="lead">按日期从新到旧。共 {digests.length} 期。</p>
-    </header>
-    {
-      digests.length === 0 ? (
-        <p class="empty">还没有早报。</p>
-      ) : (
-        <ol class="archive-list">
-          {digests.map((digest) => (
-            <li>
-              <div>
-                <a href={`/${digest.id}`}>{formatDateId(digest.id)}</a>
-                {digest.data.lead && <span class="archive-lead">{digest.data.lead}</span>}
-              </div>
-            </li>
-          ))}
-        </ol>
-      )
-    }
-  </main>
-  <Footer />
+  <BrowseShell>
+    <main id="content">
+      <header class="page-head">
+        <p class="kicker">全部期次</p>
+        <h1>归档</h1>
+        <p class="lead">按日期从新到旧。共 {digests.length} 期。点左侧日期可直接打开那一期。</p>
+      </header>
+      {
+        digests.length === 0 ? (
+          <p class="empty">还没有早报。</p>
+        ) : (
+          <ol class="archive-list">
+            {digests.map((digest) => (
+              <li>
+                <div>
+                  <a href={browseHref(digest.id, undefined, latestId)}>{formatDateId(digest.id)}</a>
+                  {digest.data.lead && <span class="archive-lead">{digest.data.lead}</span>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        )
+      }
+    </main>
+  </BrowseShell>
 </BaseLayout>

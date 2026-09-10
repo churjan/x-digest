@@ -6,6 +6,8 @@
   --accent: #c1351e;
   --accent-ink: #8f2414;
   --max: 42rem;
+  --shell: 76rem;
+  --rail: 13rem;
   --sans: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     sans-serif;
   --serif: "Noto Serif SC", "Songti SC", "SimSun", Georgia, serif;
@@ -60,9 +62,14 @@ img {
   padding: 0.4rem 0.7rem;
 }
 
-.wrap {
+.wrap,
+.wrap-wide {
   width: min(var(--max), calc(100% - 2rem));
   margin-inline: auto;
+}
+
+.wrap-wide {
+  width: min(var(--shell), calc(100% - 2rem));
 }
 
 .site-header {
@@ -114,6 +121,160 @@ img {
 .nav a[aria-current="page"],
 .nav a:hover {
   border-bottom-color: var(--accent);
+}
+
+.cat-bar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper) 88%, white);
+  backdrop-filter: blur(12px);
+}
+
+.cat-bar-inner {
+  display: flex;
+  gap: 0.1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cat-bar-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-tab {
+  flex: none;
+  padding: 0.85rem 0.95rem 0.7rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid transparent;
+}
+
+.cat-tab:hover {
+  color: var(--ink);
+}
+
+.cat-tab.active {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem 2.75rem;
+  align-items: start;
+  padding-top: 0.4rem;
+}
+
+.app-main {
+  min-width: 0;
+  max-width: 46rem;
+}
+
+.date-scroller {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0.85rem 0 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.date-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.date-chip {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.date-chip .date-week {
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+}
+
+.date-chip.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.date-chip.active .date-week {
+  color: rgb(243 238 228 / 0.72);
+}
+
+.date-rail {
+  display: none;
+}
+
+.date-rail-kicker {
+  margin: 0 0 0.85rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+}
+
+.date-month {
+  margin-bottom: 1.4rem;
+}
+
+.date-month h2 {
+  margin: 0 0 0.35rem;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.date-month ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.date-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.42rem 0.55rem;
+  margin-inline: -0.55rem;
+  border-left: 2px solid transparent;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.date-link:hover {
+  color: var(--accent);
+}
+
+.date-link.active {
+  border-left-color: var(--accent);
+  background: rgb(193 53 30 / 0.06);
+  font-weight: 700;
+}
+
+.date-link .date-week {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  font-weight: 400;
 }
 
 .site-footer {
@@ -301,5 +462,30 @@ main {
   .masthead {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .cat-tab {
+    padding-inline: 0.75rem;
+  }
+}
+
+@media (min-width: 860px) {
+  .app-shell {
+    grid-template-columns: var(--rail) minmax(0, 1fr);
+    padding-top: 0.2rem;
+  }
+
+  .date-scroller {
+    display: none;
+  }
+
+  .date-nav {
+    position: sticky;
+    top: 3.6rem;
+    padding-top: 1.85rem;
+  }
+
+  .date-rail {
+    display: block;
   }
 }

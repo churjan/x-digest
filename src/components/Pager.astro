@@ -1,20 +1,24 @@
 ---
 import type { Digest } from '../lib/digests';
+import { browseHref } from '../lib/browse';
 import { shortDateId } from '../lib/dates';
+import type { CategorySlug } from '../lib/site';
 
 interface Props {
   newer?: Digest;
   older?: Digest;
+  category?: CategorySlug;
+  latestId?: string;
 }
 
-const { newer, older } = Astro.props;
+const { newer, older, category, latestId } = Astro.props;
 ---
 
 <nav class="pager" aria-label="上下期">
   <span>
     {
       older ? (
-        <a href={`/${older.id}`}>← {shortDateId(older.id)}</a>
+        <a href={browseHref(older.id, category, latestId)}>← {shortDateId(older.id)}</a>
       ) : (
         <span>已是最早一期</span>
       )
@@ -23,7 +27,7 @@ const { newer, older } = Astro.props;
   <span>
     {
       newer ? (
-        <a href={`/${newer.id}`}>{shortDateId(newer.id)} →</a>
+        <a href={browseHref(newer.id, category, latestId)}>{shortDateId(newer.id)} →</a>
       ) : (
         <span>已是最新一期</span>
       )

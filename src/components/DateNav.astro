@@ -1,0 +1,66 @@
+---
+import { browseHref } from '../lib/browse';
+import { groupDateIdsByMonth, railDate } from '../lib/dates';
+import type { CategorySlug } from '../lib/site';
+
+interface Props {
+  dates: string[];
+  currentDate?: string;
+  category?: CategorySlug;
+  latestId?: string;
+}
+
+const { dates, currentDate, category, latestId } = Astro.props;
+const months = groupDateIdsByMonth(dates);
+---
+
+{
+  dates.length > 0 && (
+    <div class="date-nav">
+      <div class="date-scroller" aria-label="选择日期">
+        {dates.map((id) => {
+          const { day, weekday } = railDate(id);
+          const href = browseHref(id, category, latestId);
+          const current = id === currentDate;
+          return (
+            <a
+              class:list={['date-chip', { active: current }]}
+              href={href}
+              aria-current={current ? 'date' : undefined}
+            >
+              <span>{day}</span>
+              <span class="date-week">{weekday}</span>
+            </a>
+          );
+        })}
+      </div>
+      <aside class="date-rail" aria-label="日期">
+        <p class="date-rail-kicker">日期</p>
+        {months.map((month) => (
+          <section class="date-month">
+            <h2>{month.label}</h2>
+            <ol>
+              {month.ids.map((id) => {
+                const { day, weekday } = railDate(id);
+                const href = browseHref(id, category, latestId);
+                const current = id === currentDate;
+                return (
+                  <li>
+                    <a
+                      class:list={['date-link', { active: current }]}
+                      href={href}
+                      aria-current={current ? 'date' : undefined}
+                    >
+                      <span class="date-day">{day}</span>
+                      <span class="date-week">{weekday}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        ))}
+      </aside>
+    </div>
+  )
+}

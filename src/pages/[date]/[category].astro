@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BrowseShell from '../../components/BrowseShell.astro';
+import DigestArticle from '../../components/DigestArticle.astro';
+import Pager from '../../components/Pager.astro';
+import { getDigests, neighbors, type Digest } from '../../lib/digests';
+import { formatDateId } from '../../lib/dates';
+import { CATEGORIES, DATE_ID, categoryBySlug, isCategorySlug, type CategorySlug } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const digests = await getDigests();
+  return digests
+    .filter((digest) => DATE_ID.test(digest.id))
+    .flatMap((digest) =>
+      CATEGORIES.map((category) => ({
+        params: { date: digest.id, category: category.slug },
+        props: { digest, category: category.slug },
+      })),
+    );
+}
+
+interface Props {
+  digest: Digest;
+  category: CategorySlug;
+}
+
+const { digest, category } = Astro.props;
+if (!isCategorySlug(category)) {
+  throw new Error(`未知分类: ${category}`);
+}
+
+const selected = categoryBySlug(category);
+const digests = await getDigests();
+const { newer, older } = neighbors(digests, digest.id);
+const title = `${selected?.label ?? category} · ${formatDateId(digest.id)}`;
+---
+
+<BaseLayout title={title} description={digest.data.lead}>
+  <BrowseShell currentDate={digest.id} category={category}>
+    <main id="content">
+      <DigestArticle digest={digest} category={category} />
+      <Pager newer={newer} older={older} category={category} latestId={digests[0]?.id} />
+    </main>
+  </BrowseShell>
+</BaseLayout>

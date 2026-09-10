@@ -1,0 +1,28 @@
+---
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import CategoryNav from './CategoryNav.astro';
+import DateNav from './DateNav.astro';
+import { getDigests } from '../lib/digests';
+import type { CategorySlug } from '../lib/site';
+
+interface Props {
+  currentDate?: string;
+  category?: CategorySlug;
+}
+
+const { currentDate, category } = Astro.props;
+const digests = await getDigests();
+const latestId = digests[0]?.id;
+const dates = digests.map((digest) => digest.id);
+---
+
+<Header />
+<CategoryNav currentDate={currentDate} category={category} latestId={latestId} />
+<div class="app-shell wrap-wide">
+  <DateNav dates={dates} currentDate={currentDate} category={category} latestId={latestId} />
+  <div class="app-main">
+    <slot />
+  </div>
+</div>
+<Footer />

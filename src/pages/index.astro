@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import BrowseShell from '../components/BrowseShell.astro';
 import DigestArticle from '../components/DigestArticle.astro';
 import Pager from '../components/Pager.astro';
 import { getDigests, getLatestDigest } from '../lib/digests';
@@ -13,18 +12,20 @@ const older = latest ? digests.find((entry) => entry.id < latest.id) : undefined
 ---
 
 <BaseLayout description={latest?.data.lead ?? SITE.description}>
-  <Header />
-  <main id="content" class="wrap">
-    {
-      latest ? (
-        <>
-          <DigestArticle digest={latest} latest />
-          <Pager older={older} />
-        </>
-      ) : (
-        <p class="empty">还没有早报。运行 <code>npm run new</code> 创建第一期。</p>
-      )
-    }
-  </main>
-  <Footer />
+  <BrowseShell currentDate={latest?.id}>
+    <main id="content">
+      {
+        latest ? (
+          <>
+            <DigestArticle digest={latest} latest />
+            <Pager older={older} latestId={latest.id} />
+          </>
+        ) : (
+          <p class="empty">
+            还没有早报。运行 <code>npm run new</code> 创建第一期。
+          </p>
+        )
+      }
+    </main>
+  </BrowseShell>
 </BaseLayout>

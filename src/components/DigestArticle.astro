@@ -1,34 +1,75 @@
 ---
-import { render } from 'astro:content';
 import { formatDateId } from '../lib/dates';
+import { parseDigestBody, sectionsForCategory } from '../lib/browse';
+import { categoryBySlug, type CategorySlug } from '../lib/site';
 import type { Digest } from '../lib/digests';
 
 interface Props {
   digest: Digest;
   latest?: boolean;
+  category?: CategorySlug;
 }
 
-const { digest, latest = false } = Astro.props;
-const { Content, headings } = await render(digest);
-const toc = headings.filter((heading) => heading.depth === 2);
+const { digest, latest = false, category } = Astro.props;
+const allSections = parseDigestBody(digest.body);
+const sections = sectionsForCategory(allSections, category);
+const selected = category ? categoryBySlug(category) : undefined;
+const showToc = !category && allSections.length > 1;
 ---
 
 <article class="digest">
   <header class="digest-head page-head">
-    {latest && <p class="kicker">最新一期</p>}
+    {latest && !category && <p class="kicker">最新一期</p>}
+    {selected && <p class="kicker">{selected.label}</p>}
     <h1>{formatDateId(digest.id)}</h1>
-    {digest.data.lead && <p class="lead">{digest.data.lead}</p>}
+    {digest.data.lead && !category && <p class="lead">{digest.data.lead}</p>}
     {
-      toc.length > 0 && (
+      showToc && (
         <nav class="toc" aria-label="栏目">
-          {toc.map((heading) => (
-            <a href={`#${heading.slug}`}>{heading.text}</a>
+          {allSections.map((section) => (
+            <a href={`#${section.slug}`}>{section.heading}</a>
           ))}
         </nav>
       )
     }
   </header>
   <div class="digest-body">
-    <Content />
+    {
+      sections.length === 0 ? (
+        <p class="empty">
+          {selected
+            ? `这一期没有「${selected.label}」。切换到全部，或换一个日期。`
+            : '这一期还没有条目。'}
+        </p>
+      ) : (
+        sections.map((section) => (
+          <section id={section.slug}>
+            {!category && <h2>{section.heading}</h2>}
+            {section.items.length === 0 ? (
+              <p class="empty">暂无条目。</p>
+            ) : (
+              <ol>
+                {section.items.map((item) => (
+                  <li>
+                    <p>
+                      <strong>{item.title}</strong>
+                      {item.summary ? ` — ${item.summary}` : ''}
+                      {item.href && (
+                        <>
+                          {' '}
+                          <a href={item.href} rel="noopener noreferrer">
+                            原文
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        ))
+      )
+    }
   </div>
 </article>

@@ -4,18 +4,21 @@ import { SITE } from '../lib/site';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const latest = await getLatestDigest();
-const isLatest = path === '/' || (latest !== undefined && path === `/${latest.id}`);
+const isLatestIssue =
+  latest !== undefined && (path === `/${latest.id}` || path.startsWith(`/${latest.id}/`));
+const isHome = path === '/' || isLatestIssue;
 ---
 
 <header class="site-header">
-  <div class="wrap masthead">
+  <div class="wrap-wide masthead">
     <a class="brand" href="/">
       <span class="brand-name">{SITE.name}</span>
-      <span class="brand-tag">{SITE.categories.join(' / ')}</span>
+      <span class="brand-tag">{SITE.tagline}</span>
     </a>
-    <nav class="nav" aria-label="主导航">
-      <a href="/" aria-current={isLatest ? 'page' : undefined}>最新</a>
+    <nav class="nav" aria-label="站点">
+      <a href="/" aria-current={isHome ? 'page' : undefined}>最新</a>
       <a href="/archive" aria-current={path === '/archive' ? 'page' : undefined}>归档</a>
+      <a href="/rss.xml">RSS</a>
     </nav>
   </div>
 </header>
