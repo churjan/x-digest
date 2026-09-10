@@ -5,30 +5,51 @@ import type { Digest } from '../lib/digests';
 
 interface Props {
   digest: Digest;
-  latest?: boolean;
 }
 
-const { digest, latest = false } = Astro.props;
+const { digest } = Astro.props;
 const { Content, headings } = await render(digest);
 const toc = headings.filter((heading) => heading.depth === 2);
 ---
 
 <article class="digest">
-  <header class="digest-head page-head">
-    {latest && <p class="kicker">最新一期</p>}
-    <h1>{formatDateId(digest.id)}</h1>
-    {digest.data.lead && <p class="lead">{digest.data.lead}</p>}
-    {
-      toc.length > 0 && (
-        <nav class="toc" aria-label="栏目">
-          {toc.map((heading) => (
-            <a href={`#${heading.slug}`}>{heading.text}</a>
-          ))}
-        </nav>
-      )
-    }
+  <header id="digest-top" class="digest-head page-head">
+    <div class="digest-heading-row">
+      <h1>{formatDateId(digest.id)}</h1>
+      <div class="view-switch" role="group" aria-label="显示模式">
+        <button type="button" data-view="masonry" aria-label="瀑布流模式" title="瀑布流" aria-pressed="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="10" rx="1.5"/><rect x="14" y="3" width="7" height="6" rx="1.5"/><rect x="3" y="17" width="7" height="4" rx="1.5"/><rect x="14" y="13" width="7" height="8" rx="1.5"/></svg>
+        </button>
+        <button type="button" data-view="list" aria-label="列表模式" title="列表" aria-pressed="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="4" height="4" rx="1"/><rect x="3" y="16" width="4" height="4" rx="1"/><path d="M11 5h10M11 8h7M11 17h10M11 20h7"/></svg>
+        </button>
+      </div>
+    </div>
+    {digest.data.lead && (
+      <div class="digest-summary">
+        <p class="summary-label">本期速览</p>
+        <p class="lead">{digest.data.lead}</p>
+      </div>
+    )}
   </header>
   <div class="digest-body">
     <Content />
   </div>
+    {
+      toc.length > 0 && (
+        <nav class="toc" aria-label="栏目">
+          <button type="button" data-filter="" aria-pressed="true">全部</button>
+          {toc.map((heading) => (
+            <button type="button" data-filter={heading.text} aria-pressed="false">{heading.text}</button>
+          ))}
+        </nav>
+      )
+    }
 </article>
+
+<script>
+  import { initDigest } from '../lib/digest-ui';
+  import { setupDateNavigation } from '../lib/date-navigation';
+  initDigest();
+  setupDateNavigation();
+</script>

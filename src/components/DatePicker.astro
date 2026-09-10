@@ -1,0 +1,239 @@
+---
+interface Props { dates: string[]; selected: string; }
+const { dates, selected } = Astro.props;
+---
+
+<div class="calendar-picker" data-dates={JSON.stringify(dates)} data-selected={selected}>
+  <button type="button" class="range-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="range-calendar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></svg>
+    <span class="range-value">{selected.replaceAll('-', '/')}</span>
+  </button>
+  <div id="range-calendar" class="range-popover" popover="auto" role="dialog" aria-label="选择日期范围">
+    <div class="range-navigation">
+      <button type="button" class="range-prev" aria-label="上个月"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg></button>
+      <button type="button" class="range-next" aria-label="下个月"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg></button>
+    </div>
+    <div class="range-months"></div>
+    <div class="range-presets" role="group" aria-label="快捷日期范围">
+      <button type="button" data-days="1">今天</button>
+      <button type="button" data-days="7">近一周</button>
+      <button type="button" data-days="30">近一个月</button>
+    </div>
+    <p class="range-feedback" role="status"></p>
+    <p class="range-announcement" aria-live="polite"></p>
+  </div>
+</div>
+
+<script>
+  import { readDateRange, rangeQuery, recentDateRange } from '../lib/date-range';
+  const picker = document.querySelector<HTMLElement>('.calendar-picker');
+  if (picker) {
+    const dates: string[] = JSON.parse(picker.dataset.dates || '[]');
+    const ordered = [...dates].sort();
+    const min = ordered[0], max = ordered.at(-1)!;
+    const applied = readDateRange(location.search, dates);
+    const selected = picker.dataset.selected || max;
+    const trigger = picker.querySelector<HTMLButtonElement>('.range-trigger')!;
+    const value = picker.querySelector<HTMLElement>('.range-value')!;
+    const popup = picker.querySelector<HTMLElement>('.range-popover')!;
+    const months = picker.querySelector<HTMLElement>('.range-months')!;
+    const announcement = picker.querySelector<HTMLElement>('.range-announcement')!;
+    const prev = picker.querySelector<HTMLButtonElement>('.range-prev')!;
+    const next = picker.querySelector<HTMLButtonElement>('.range-next')!;
+    const feedback = picker.querySelector<HTMLElement>('.range-feedback')!;
+    for (const preset of picker.querySelectorAll<HTMLButtonElement>('.range-presets button')) {
+      preset.addEventListener('click', () => {
+        const range = recentDateRange(Number(preset.dataset.days));
+        const query = rangeQuery(range);
+        if (readDateRange(query, dates)) location.assign(range.start === range.end ? '/' + range.start : '/' + query);
+        else {
+          feedback.textContent = preset.dataset.days === '1' ? '今天暂无早报' : '这段时间暂无早报';
+          position();
+        }
+      });
+    }
+    const parse = (id: string) => new Date(id + 'T12:00:00Z');
+    const idOf = (date: Date) => date.toISOString().slice(0, 10);
+    const monthOf = (id: string) => Number(id.slice(0, 4)) * 12 + Number(id.slice(5, 7)) - 1;
+    const fromMonth = (index: number, day = 1) => new Date(Date.UTC(Math.floor(index / 12), index % 12, day, 12));
+    const minMonth = monthOf(min), maxMonth = monthOf(max);
+    const compact = matchMedia('(max-width: 600px)');
+    let count = compact.matches ? 1 : 2;
+    let start = applied?.start || selected;
+    let end: string | null = applied?.end || selected;
+    let hovered: string | null = null;
+    let focusDate = start || selected;
+    let month = Math.max(minMonth, Math.min(monthOf(focusDate), maxMonth - count + 1));
+    const label = (id: string) => id.replaceAll('-', '/');
+    const updateLabel = () => { value.textContent = !start ? '选择日期范围' : end && end !== start ? label(start) + ' – ' + label(end) : label(start); };
+    const position = () => {
+      if (!popup.matches(':popover-open')) return;
+      const box = trigger.getBoundingClientRect();
+      const height = popup.offsetHeight;
+      popup.style.left = Math.max(8, Math.min(box.left, innerWidth - popup.offsetWidth - 8)) + 'px';
+      popup.style.top = Math.max(8, Math.min(box.bottom + 6 + height <= innerHeight - 8 ? box.bottom + 6 : box.top - height - 6, innerHeight - height - 8)) + 'px';
+    };
+    const paintRange = () => {
+      const other = end || hovered || start;
+      const [low, high] = [start, other].sort();
+      for (const button of months.querySelectorAll<HTMLButtonElement>('[data-date]')) {
+        const id = button.dataset.date!;
+        const cell = button.parentElement!;
+        cell.dataset.range = start && id >= low && id <= high ? 'true' : 'false';
+        cell.dataset.start = String(Boolean(start) && id === low);
+        cell.dataset.end = String(Boolean(start) && id === high);
+        button.setAttribute('aria-pressed', String(Boolean(start) && id >= low && id <= high));
+      }
+    };
+    const focusDay = () => months.querySelector<HTMLButtonElement>('[data-date="' + focusDate + '"]')?.focus({ preventScroll: true });
+    const render = () => {
+      months.replaceChildren();
+      prev.disabled = month <= minMonth;
+      next.disabled = month + count - 1 >= maxMonth;
+      if (monthOf(focusDate) < month || monthOf(focusDate) >= month + count) {
+        focusDate = [min, idOf(fromMonth(month)), max].sort()[1];
+      }
+      for (let offset = 0; offset < count; offset++) {
+        const index = month + offset;
+        const date = fromMonth(index);
+        const section = document.createElement('section');
+        const title = document.createElement('h3');
+        title.id = 'range-month-' + offset;
+        title.textContent = date.getUTCFullYear() + '年' + (date.getUTCMonth() + 1) + '月';
+        const table = document.createElement('table');
+        table.setAttribute('role', 'grid');
+        table.setAttribute('aria-labelledby', title.id);
+        const head = table.createTHead().insertRow();
+        for (const weekday of ['日', '一', '二', '三', '四', '五', '六']) {
+          const th = document.createElement('th'); th.scope = 'col'; th.textContent = weekday; head.append(th);
+        }
+        const body = table.createTBody();
+        const initial = 1 - date.getUTCDay();
+        for (let row = 0; row < 6; row++) {
+          const tr = body.insertRow();
+          for (let column = 0; column < 7; column++) {
+            const cell = tr.insertCell();
+            const day = fromMonth(index, initial + row * 7 + column);
+            // Avoid duplicate dates between the two visible calendars.
+            if (day.getUTCMonth() !== date.getUTCMonth()) continue;
+            const id = idOf(day);
+            const button = document.createElement('button');
+            button.type = 'button'; button.textContent = String(day.getUTCDate()); button.dataset.date = id;
+            button.disabled = id < min || id > max;
+            button.tabIndex = id === focusDate ? 0 : -1;
+            button.setAttribute('aria-label', id + (id === start ? '，开始日期' : id === end ? '，结束日期' : ''));
+            if (id === recentDateRange(1).end) button.setAttribute('aria-current', 'date');
+            button.addEventListener('click', () => {
+              feedback.textContent = '';
+              focusDate = id;
+              if (!start || end) { start = id; end = null; hovered = null; announcement.textContent = '请选择结束日期'; }
+              else {
+                [start, end] = [start, id].sort();
+                const query = rangeQuery({ start, end });
+                if (readDateRange(query, dates)) { location.assign(start === end ? '/' + start : '/' + query); return; }
+                announcement.textContent = '所选范围内暂无早报，请重新选择';
+              }
+              render(); focusDay();
+            });
+            button.addEventListener('pointerenter', () => { if (start && !end) { hovered = id; paintRange(); } });
+            cell.append(button);
+          }
+        }
+        section.append(title, table); months.append(section);
+      }
+      paintRange(); position();
+    };
+    trigger.addEventListener('click', () => {
+      if (popup.matches(':popover-open')) popup.hidePopover();
+      else { render(); popup.showPopover(); position(); focusDay(); }
+    });
+    popup.addEventListener('toggle', () => {
+      const open = popup.matches(':popover-open');
+      trigger.setAttribute('aria-expanded', String(open));
+      if (!open) {
+        const current = readDateRange(location.search, dates);
+        start = current?.start || picker.dataset.selected || selected;
+        end = current?.end || start;
+        hovered = null;
+        focusDate = start;
+        updateLabel();
+      }
+    });
+    prev.addEventListener('click', () => { month--; render(); });
+    next.addEventListener('click', () => { month++; render(); });
+    months.addEventListener('pointerleave', () => { hovered = null; paintRange(); });
+    popup.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') { event.preventDefault(); popup.hidePopover(); trigger.focus({ preventScroll: true }); return; }
+      const button = event.target as HTMLButtonElement;
+      if (!button.dataset.date) return;
+      const date = parse(button.dataset.date);
+      let target = new Date(date);
+      const shifts: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7, Home: -date.getUTCDay(), End: 6 - date.getUTCDay() };
+      if (event.key in shifts) target.setUTCDate(date.getUTCDate() + shifts[event.key]);
+      else if (event.key === 'PageUp' || event.key === 'PageDown') {
+        const index = monthOf(button.dataset.date) + (event.key === 'PageUp' ? -1 : 1);
+        target = fromMonth(index, Math.min(date.getUTCDate(), fromMonth(index + 1, 0).getUTCDate()));
+      } else return;
+      event.preventDefault();
+      focusDate = [min, idOf(target), max].sort()[1];
+      const index = monthOf(focusDate);
+      if (index < month) month = index;
+      if (index >= month + count) month = index - count + 1;
+      render(); focusDay();
+    });
+    compact.addEventListener('change', () => { count = compact.matches ? 1 : 2; month = Math.max(minMonth, Math.min(month, maxMonth - count + 1)); render(); });
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, { capture: true, passive: true });
+    document.addEventListener('digest:date-change', (event) => {
+      const date = (event as CustomEvent<string>).detail;
+      picker.dataset.selected = date;
+      start = date;
+      end = date;
+      hovered = null;
+      focusDate = date;
+      month = Math.max(minMonth, Math.min(monthOf(date), maxMonth - count + 1));
+      if (popup.matches(':popover-open')) popup.hidePopover();
+      feedback.textContent = '';
+      updateLabel();
+    });
+    updateLabel();
+  }
+</script>
+
+<style is:global>
+  .calendar-picker { margin-top: 1rem; }
+  .range-trigger { display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: 2.5rem; padding: 0.6rem 0.7rem; border: 1px solid var(--rule); border-radius: 0.5rem; background: #fffdf8; color: var(--ink); font: inherit; text-align: left; cursor: pointer; box-shadow: 0 1px 2px rgb(28 25 22 / 0.03); }
+  .range-trigger:hover { background: #ebe5da; }
+  .range-trigger svg { flex-shrink: 0; color: var(--ink-soft); }
+  .range-value { font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+  .range-popover { position: fixed; inset: auto; margin: 0; width: max-content; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); overflow: auto; padding: 0.75rem; border: 1px solid var(--rule); border-radius: 0.6rem; background: #fffdf8; color: var(--ink); box-shadow: 0 5px 18px rgb(28 25 22 / 0.12); }
+  .range-popover::backdrop { background: transparent; }
+  .range-months { display: flex; gap: 1.5rem; }
+  .range-months section { width: 252px; }
+  .range-months h3 { display: flex; align-items: center; justify-content: center; height: 28px; margin: 0 0 0.5rem; font: 500 14px var(--sans); }
+  .range-navigation { position: absolute; inset: 0.75rem 0.75rem auto; display: flex; justify-content: space-between; pointer-events: none; }
+  .range-navigation button { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; color: var(--ink-soft); background: transparent; cursor: pointer; pointer-events: auto; }
+  .range-navigation button:hover { background: #ebe5da; color: var(--ink); }
+  .range-navigation button:disabled { opacity: 0.3; cursor: default; }
+  .range-months table { width: 100%; border-collapse: separate; border-spacing: 0 4px; table-layout: fixed; }
+  .range-months th { height: 24px; padding: 0; color: var(--ink-soft); font-size: 12px; font-weight: 400; text-align: center; }
+  .range-months td { height: 36px; padding: 0; text-align: center; }
+  .range-months td[data-range="true"] { background: #e9e0d1; }
+  .range-months td[data-start="true"] { border-radius: 6px 0 0 6px; }
+  .range-months td[data-end="true"] { border-radius: 0 6px 6px 0; }
+  .range-months td[data-start="true"][data-end="true"] { border-radius: 6px; }
+  .range-months td button { display: block; width: 100%; height: 36px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: 400 13px var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; }
+  .range-months td button:hover { background: #e9e0d1; }
+  .range-months td button:disabled { color: var(--ink-soft); opacity: 0.35; cursor: default; }
+  .range-months td button[aria-current="date"] { background: #ebe5da; }
+  .range-months td[data-start="true"] button,
+  .range-months td[data-end="true"] button { background: var(--accent-ink); color: #fffdf8; }
+  .range-popover button:focus-visible { position: relative; outline: 2px solid var(--accent-ink); outline-offset: 2px; z-index: 1; }
+  .range-announcement { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+  .range-presets { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--rule); }
+  .range-presets button { padding: 0.4rem 0.7rem; border: 1px solid var(--rule); border-radius: 6px; background: transparent; color: var(--ink); font: 400 13px var(--sans); cursor: pointer; }
+  .range-presets button:hover { background: #e9e0d1; border-color: var(--accent-ink); color: var(--accent-ink); }
+  .range-feedback { margin: 0.5rem 0 0; color: var(--ink-soft); font-size: 13px; }
+  .range-feedback:empty { display: none; }
+  @media (max-width: 600px) { .range-months section { width: min(252px, calc(100vw - 42px)); } }
+</style>

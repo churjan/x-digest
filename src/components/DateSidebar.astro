@@ -1,0 +1,51 @@
+---
+import type { Digest } from '../lib/digests';
+import { shortDateId } from '../lib/dates';
+import { SITE } from '../lib/site';
+import DatePicker from './DatePicker.astro';
+
+interface Props {
+  digests: Digest[];
+  selected: string;
+}
+
+const { digests, selected } = Astro.props;
+
+---
+
+<aside class="date-sidebar" aria-label="选择早报日期">
+  <a class="brand sidebar-brand" href="/">
+    <span class="brand-name">{SITE.name}</span>
+    <span class="brand-tag">每天几分钟，读懂新动向</span>
+  </a>
+  <div class="date-panel">
+    <nav class="date-list" aria-label="早报日期">
+      {digests.slice(0, 7).map((digest) => (
+        <a href={`/${digest.id}`} aria-current={digest.id === selected ? 'page' : undefined}>
+          <time datetime={digest.id} aria-label={shortDateId(digest.id)}>{shortDateId(digest.id).replace(/^\d+年/, '')}</time>
+        </a>
+      ))}
+    </nav>
+    <DatePicker dates={digests.map((digest) => digest.id)} selected={selected} />
+  </div>
+</aside>
+
+<script>
+  import { readDateRange } from '../lib/date-range';
+  const list = document.querySelector<HTMLElement>('.date-list');
+  if (list) {
+    const links = Array.from(list.querySelectorAll<HTMLAnchorElement>('a'));
+    const dates = links.map((link) => new URL(link.href).pathname.replaceAll('/', ''));
+    // Only a multi-day range has no single active issue.
+    const availableDates: string[] = JSON.parse(document.querySelector<HTMLElement>('.calendar-picker')?.dataset.dates || '[]');
+    const range = readDateRange(location.search, availableDates);
+    if (range) {
+      links.forEach((link, index) => {
+        if (range.start === range.end && dates[index] === range.start) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      });
+    }
+
+  }
+
+</script>

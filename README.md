@@ -3,7 +3,6 @@
 每日精选 X 上的 **AI / 产品 / 增长 / UI / 前端 / 后端** 热帖。首页即最新一期。
 
 - 最新一期：`/`
-- 归档：`/archive`
 - 某一期：`/YYYY-MM-DD`
 
 正文用编号列表，不用表格。
@@ -83,6 +82,6 @@ src/
   content.config.ts  # 内容集合
   components/
   layouts/
-  pages/             # /、/archive、/YYYY-MM-DD、RSS
+  pages/             # /、/YYYY-MM-DD、RSS
   styles/
 ```

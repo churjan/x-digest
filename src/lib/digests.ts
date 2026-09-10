@@ -14,11 +14,3 @@ export async function getLatestDigest(): Promise<Digest | undefined> {
   const digests = await getDigests();
   return digests[0];
 }
-
-export function neighbors(digests: Digest[], id: string) {
-  const index = digests.findIndex((entry) => entry.id === id);
-  return {
-    newer: index > 0 ? digests[index - 1] : undefined,
-    older: index >= 0 && index < digests.length - 1 ? digests[index + 1] : undefined,
-  };
-}
